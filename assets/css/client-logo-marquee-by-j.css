@@ -1,0 +1,217 @@
+/*!
+ * Client Logo Marquee by J - v1.0.3
+ *
+ * The loop is one composited transform on a single element. No per-frame JS,
+ * no layout thrash: the browser hands the whole animation to the compositor.
+ * Every tunable value is a custom property so Elementor's controls only ever
+ * write a variable, never a new rule.
+ */
+
+.clmj {
+	--clmj-duration: 38s;
+	--clmj-gap: 72px;
+	--clmj-fade: 140px;
+	--clmj-logo-h: 44px;
+	--clmj-logo-max-w: 200px;
+	--clmj-gray: 100%;
+	--clmj-opacity: 0.55;
+	--clmj-gray-hover: 0%;
+	--clmj-opacity-hover: 1;
+	--clmj-hover-scale: 1.06;
+	--clmj-t: 420ms;
+	--clmj-card-min-w: 230px;
+	--clmj-card-lift: -6px;
+	--clmj-sets: 2;
+	--clmj-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+	position: relative;
+	width: 100%;
+}
+
+.clmj-viewport {
+	overflow: hidden;
+}
+
+/* Soft edges, so logos dissolve instead of being chopped off by the container.
+   A mask beats overlaying two gradients: it works on any background, including
+   images and gradients. */
+.clmj--fade .clmj-viewport {
+	-webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--clmj-fade), #000 calc(100% - var(--clmj-fade)), transparent 100%);
+	mask-image: linear-gradient(90deg, transparent 0, #000 var(--clmj-fade), #000 calc(100% - var(--clmj-fade)), transparent 100%);
+}
+
+.clmj-track {
+	display: flex;
+	width: -webkit-max-content;
+	width: max-content;
+	animation: clmj-scroll var(--clmj-duration) linear infinite;
+}
+
+/* Promote only while it is actually moving. */
+.clmj:not(.is-paused) .clmj-track {
+	will-change: transform;
+}
+
+.clmj.is-paused .clmj-track {
+	animation-play-state: paused;
+	will-change: auto;
+}
+
+.clmj--reverse .clmj-track {
+	animation-direction: reverse;
+}
+
+.clmj--pause-hover .clmj-viewport:hover .clmj-track,
+.clmj:focus-within .clmj-track {
+	animation-play-state: paused;
+}
+
+/* The track holds N identical sets, so shifting by exactly one set width lands
+   on a pixel-identical frame. That is what makes the loop seamless. */
+@keyframes clmj-scroll {
+	from {
+		transform: translate3d(0, 0, 0);
+	}
+	to {
+		transform: translate3d(calc(-100% / var(--clmj-sets)), 0, 0);
+	}
+}
+
+.clmj-set {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* The gap lives on the item, including the last one, so each set measures
+   exactly one repeat of the pattern. A flex `gap` would leave the seam one
+   gap short and the loop would visibly jump. */
+.clmj-item {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	margin: 0 var(--clmj-gap) 0 0;
+	padding: 0;
+}
+
+.clmj-cell {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-decoration: none;
+	transition: transform var(--clmj-t) var(--clmj-ease),
+		background-color var(--clmj-t) var(--clmj-ease),
+		border-color var(--clmj-t) var(--clmj-ease),
+		box-shadow var(--clmj-t) var(--clmj-ease);
+}
+
+.clmj-cell:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 6px;
+}
+
+.clmj-logo {
+	display: block;
+	height: var(--clmj-logo-h);
+	width: auto;
+	max-width: var(--clmj-logo-max-w);
+	object-fit: contain;
+	-webkit-filter: grayscale(var(--clmj-gray));
+	filter: grayscale(var(--clmj-gray));
+	opacity: var(--clmj-opacity);
+	transition: opacity var(--clmj-t) var(--clmj-ease),
+		-webkit-filter var(--clmj-t) var(--clmj-ease),
+		filter var(--clmj-t) var(--clmj-ease),
+		transform var(--clmj-t) var(--clmj-ease);
+}
+
+/* Sizing is enforced rather than suggested. Many themes and page builders set
+   `img { width: 100% }` inside widget containers, which stretches a logo to
+   the width of the whole strip. The values still come from the panel, so the
+   controls keep working normally. */
+.clmj .clmj-logo,
+.clmj .clmj-cell img {
+	height: var(--clmj-logo-h) !important;
+	width: auto !important;
+	max-width: var(--clmj-logo-max-w) !important;
+	min-width: 0 !important;
+	max-height: none !important;
+	min-height: 0 !important;
+}
+
+.clmj-item:hover .clmj-logo {
+	-webkit-filter: grayscale(var(--clmj-gray-hover));
+	filter: grayscale(var(--clmj-gray-hover));
+	opacity: var(--clmj-opacity-hover);
+	transform: scale(var(--clmj-hover-scale));
+}
+
+/* ---- card presentation ---------------------------------------------------
+   These are only defaults. Elementor's own output is more specific, so any
+   change in the panel wins without !important anywhere. */
+.clmj--card .clmj-cell {
+	box-sizing: border-box;
+	min-width: var(--clmj-card-min-w);
+	overflow: hidden;
+	padding: 26px 34px;
+	border: 1px solid #ebedf1;
+	border-radius: 18px;
+	background-color: #fff;
+}
+
+.clmj--card .clmj-item:hover .clmj-cell {
+	transform: translate3d(0, var(--clmj-card-lift), 0);
+}
+
+/* Highlight that sweeps across on hover. Transform only, so it stays cheap. */
+.clmj--sheen .clmj-cell::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	border-radius: inherit;
+	pointer-events: none;
+	background: linear-gradient(115deg, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 68%);
+	opacity: 0;
+	transform: translate3d(-120%, 0, 0);
+}
+
+.clmj--sheen .clmj-item:hover .clmj-cell::after {
+	opacity: 1;
+	transform: translate3d(120%, 0, 0);
+	transition: transform 0.95s var(--clmj-ease), opacity 0.2s linear;
+}
+
+/* ---- reduced motion ------------------------------------------------------
+   Not a degraded marquee: a static, centred, wrapping logo grid. */
+@media (prefers-reduced-motion: reduce) {
+	.clmj-track {
+		animation: none;
+		width: 100%;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	.clmj-set[data-clmj-clone] {
+		display: none;
+	}
+
+	.clmj-set {
+		flex-wrap: wrap;
+		justify-content: center;
+		row-gap: 28px;
+	}
+
+	.clmj--fade .clmj-viewport {
+		-webkit-mask-image: none;
+		mask-image: none;
+	}
+
+	.clmj-cell,
+	.clmj-logo {
+		transition: none;
+	}
+}
